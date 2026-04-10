@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinguaForge: Daily Lesson</title>
+    <style>
+        :root {
+            --primary: #2C3E50;
+            --secondary: #18BC9C;
+            --bg: #F8F9FA;
+            --card-bg: #FFFFFF;
+            --text-main: #333333;
+            --text-muted: #6C757D;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .app-container {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 500px;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header { margin-bottom: 20px; }
+        .header h1 { margin: 0; font-size: 1.5rem; color: var(--primary); }
+        .progress { color: var(--text-muted); font-size: 0.9rem; margin-top: 5px; }
+
+        .category-badge {
+            display: inline-block;
+            background-color: var(--secondary);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+        }
+
+        .english-sentence {
+            font-size: 1.4rem;
+            font-weight: bold;
+            margin-bottom: 25px;
+            min-height: 60px;
+        }
+
+        .language-toggle {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .lang-btn {
+            background-color: #E9ECEF;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .lang-btn.active { background-color: var(--primary); color: white; }
+
+        .reveal-btn {
+            background-color: var(--secondary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 20px;
+            transition: 0.3s;
+        }
+        
+        .reveal-btn:hover { background-color: #128f76; }
+
+        .translation-card {
+            background-color: #F1F3F5;
+            padding: 20px;
+            border-radius: 8px;
+            display: none; /* Hidden by default */
+            margin-bottom: 20px;
+        }
+
+        .target-text { font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; color: var(--primary); }
+        .phonetics { font-style: italic; color: var(--text-muted); margin-bottom: 10px; }
+        .literal { font-size: 0.9rem; background-color: #E2E3E5; padding: 5px; border-radius: 4px; display: inline-block; }
+
+        .audio-btn {
+            background: none;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            padding: 5px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .audio-btn:hover { background-color: var(--primary); color: white; }
+
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            border-top: 1px solid #E9ECEF;
+            padding-top: 20px;
+        }
+
+        .nav-btn {
+            background: none;
+            border: none;
+            color: var(--primary);
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        
+        .nav-btn:disabled { color: #ccc; cursor: not-allowed; }
+
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="header">
+        <h1>LinguaForge 🌐</h1>
+        <div class="progress" id="progress-text">Day 1 of 35</div>
+    </div>
+
+    <div class="category-badge" id="category-badge">Living</div>
+
+    <div class="english-sentence" id="english-text">Where is the bathroom?</div>
+
+    <div class="language-toggle">
+        <button class="lang-btn active" id="btn-th" onclick="setLanguage('th')">🇹🇭 Thai</button>
+        <button class="lang-btn" id="btn-fr" onclick="setLanguage('fr')">🇫🇷 French</button>
+    </div>
+
+    <button class="reveal-btn" id="reveal-btn" onclick="revealTranslation()">Reveal Translation</button>
+
+    <div class="translation-card" id="translation-card">
+        <div class="target-text" id="target-text">ห้องน้ำอยู่ที่ไหนครับ</div>
+        <div class="phonetics" id="phonetics-text">Hong-nam yoo tee-nai khrap?</div>
+        <div class="literal" id="literal-text">[Room-water at where (polite)?]</div>
+        <button class="audio-btn" onclick="playAudio()">🔊 Play Audio</button>
+    </div>
+
+    <div class="navigation">
+        <button class="nav-btn" id="prev-btn" onclick="changeDay(-1)">← Previous Day</button>
+        <button class="nav-btn" id="next-btn" onclick="changeDay(1)">Next Day →</button>
+    </div>
+</div>
+
+<script>
+    // The Master Dataset (35 Sentences)
+    const database = [
+        { cat: "Living", eng: "Where is the bathroom?", 
+          th: { t: "ห้องน้ำอยู่ที่ไหนครับ", p: "Hong-nam yoo tee-nai khrap?", l: "[Room-water at where (polite)?]", v: "th-TH" }, 
+          fr: { t: "Où sont les toilettes ?", p: "Oo sohn lay twah-let?", l: "[Where are the toilets?]", v: "fr-FR" } },
+        { cat: "Living", eng: "The air conditioning is not working.", 
+          th: { t: "แอร์ไม่เย็นครับ", p: "Air mai yen khrap.", l: "[Air-con not cold (polite).]", v: "th-TH" }, 
+          fr: { t: "La climatisation ne marche pas.", p: "Lah klee-mah-tee-zah-see-on nuh marsh pah.", l: "[The air-con not works not.]", v: "fr-FR" } },
+        { cat: "Living", eng: "Do you have free Wi-Fi?", 
+          th: { t: "มีไวไฟฟรีไหมครับ", p: "Mee wai-fai free mai khrap?", l: "[Have Wi-Fi free (question-word) (polite)?]", v: "th-TH" }, 
+          fr: { t: "Avez-vous le Wi-Fi gratuit ?", p: "Ah-vay voo luh wee-fee grah-twee?", l: "[Have you the Wi-Fi free?]", v: "fr-FR" } },
+        { cat: "Living", eng: "Can I leave my bags here?", 
+          th: { t: "ฝากกระเป๋าไว้ที่นี่ได้ไหมครับ", p: "Fak gra-pao wai tee-nee dai mai khrap?", l: "[Deposit bag keep at-here can (question-word) (polite)?]", v: "th-TH" }, 
+          fr: { t: "Puis-je laisser mes bagages ici ?", p: "Pwee-zhuh lay-say may bah-gahzh ee-see?", l: "[Can I to-leave my bags here?]", v: "fr-FR" } },
+        { cat: "Living", eng: "I lost my key.", 
+          th: { t: "ทำกุญแจหายครับ", p: "Tum goon-jae hai khrap.", l: "[Make key lost (polite).]", v: "th-TH" }, 
+          fr: { t: "J'ai perdu ma clé.", p: "Zhay pear-doo mah klay.", l: "[I have lost my key.]", v: "fr-FR" } },
+        { cat: "Living", eng: "Can you help me?", 
+          th: { t: "ช่วยผมหน่อยได้ไหมครับ", p: "Chuay phom noi dai mai khrap?", l: "[Help me a-little can (question-word) (polite)?]", v: "th-TH" }, 
+          fr: { t: "Pouvez-vous m'aider ?", p: "Poo-vay voo may-day?", l: "[Can you me-to-help?]", v: "fr-FR" } },
+        { cat: "Food", eng: "Can I have the menu?", 
+          th: { t: "ขอเมนูหน่อยครับ", p: "Kor menu noi khrap.", l: "[Ask-for menu a-little (polite).]", v: "th-TH" }, 
+          fr: { t: "Le menu, s'il vous plaît.", p: "Luh muh-noo, seel voo play.", l: "[The menu, if it you pleases.]", v: "fr-FR" } },
+        { cat: "Food", eng: "I am allergic to peanuts.", 
+          th: { t: "แพ้ถั่วลิสงครับ", p: "Pae tua-li-song khrap.", l: "[Allergic peanut (polite).]", v: "th-TH" }, 
+          fr: { t: "Je suis allergique aux cacahuètes.", p: "Zhuh sweez ah-lair-zheek oh kah-kah-wet.", l: "[I am allergic to-the peanuts.]", v: "fr-FR" } },
+        { cat: "Food", eng: "Not spicy, please.", 
+          th: { t: "ไม่เผ็ดครับ", p: "Mai pet khrap.", l: "[Not spicy (polite).]", v: "th-TH" }, 
+          fr: { t: "Pas épicé, s'il vous plaît.", p: "Pah zay-pee-say, seel voo play.", l: "[Not spicy, if it you pleases.]", v: "fr-FR" } },
+        { cat: "Food", eng: "Water, please.", 
+          th: { t: "ขอน้ำเปล่าครับ", p: "Kor nam-plao khrap.", l: "[Ask-for water-plain (polite).]", v: "th-TH" }, 
+          fr: { t: "De l'eau, s'il vous plaît.", p: "Duh loh, seel voo play.", l: "[Some water, if it you pleases.]", v: "fr-FR" } },
+        { cat: "Food", eng: "It's delicious!", 
+          th: { t: "อร่อยมากครับ", p: "A-roi mak khrap.", l: "[Delicious very (polite).]", v: "th-TH" }, 
+          fr: { t: "C'est délicieux !", p: "Say day-lee-syuh!", l: "[It is delicious!]", v: "fr-FR" } },
+        { cat: "Food", eng: "The bill, please.", 
+          th: { t: "เก็บเงินด้วยครับ", p: "Gep ngern duay khrap.", l: "[Collect money also (polite).]", v: "th-TH" }, 
+          fr: { t: "L'addition, s'il vous plaît.", p: "Lah-dee-syohn, seel voo play.", l: "[The addition, if it you pleases.]", v: "fr-FR" } },
+        { cat: "Transport", eng: "Please use the meter.", 
+          th: { t: "เปิดมิเตอร์ด้วยครับ", p: "Peut meter duay khrap.", l: "[Open meter also (polite).]", v: "th-TH" }, 
+          fr: { t: "Mettez le compteur, s'il vous plaît.", p: "Met-tay luh kohn-tur, seel voo play.", l: "[Put the counter, if it you pleases.]", v: "fr-FR" } },
+        { cat: "Transport", eng: "I want to go to this address.", 
+          th: { t: "อยากไปที่อยู่ตามนี้ครับ", p: "Yak pai tee-yoo tam nee khrap.", l: "[Want go address follow this (polite).]", v: "th-TH" }, 
+          fr: { t: "Je veux aller à cette adresse.", p: "Zhuh vuh zah-lay ah set ah-dress.", l: "[I want to-go to this address.]", v: "fr-FR" } },
+        { cat: "Transport", eng: "Stop right here.", 
+          th: { t: "จอดตรงนี้ครับ", p: "Jot trong nee khrap.", l: "[Park exactly-here (polite).]", v: "th-TH" }, 
+          fr: { t: "Arrêtez-vous ici.", p: "Ah-reh-tay voo ee-see.", l: "[Stop you here.]", v: "fr-FR" } },
+        { cat: "Transport", eng: "Go straight, then turn left/right.", 
+          th: { t: "ตรงไป แล้วเลี้ยวซ้าย/ขวา", p: "Trong pai, laew liaw sai/kwa.", l: "[Straight go, then turn left/right.]", v: "th-TH" }, 
+          fr: { t: "Allez tout droit, puis tournez à gauche/droite.", p: "Ah-lay too drwah, pwee toor-nay ah gohsh/drwaht.", l: "[Go all straight, then turn to left/right.]", v: "fr-FR" } },
+        { cat: "Transport", eng: "How much to go to the airport?", 
+          th: { t: "ไปสนามบินเท่าไหร่ครับ", p: "Pai sa-nam-bin tao-rai khrap?", l: "[Go field-fly how-much (polite)?]", v: "th-TH" }, 
+          fr: { t: "C'est combien pour aller à l'aéroport ?", p: "Say kom-byan poor ah-lay ah lair-oh-por?", l: "[It is how-much for to-go to the airport?]", v: "fr-FR" } },
+        { cat: "Transport", eng: "I am lost.", 
+          th: { t: "ผมหลงทางครับ", p: "Phom long-tang khrap.", l: "[I lose-way (polite).]", v: "th-TH" }, 
+          fr: { t: "Je suis perdu.", p: "Zhuh swee pear-doo.", l: "[I am lost.]", v: "fr-FR" } },
+        { cat: "Time", eng: "What time do you close?", 
+          th: { t: "ปิดกี่โมงครับ", p: "Pit gee-mong khrap?", l: "[Close how-many-hours (polite)?]", v: "th-TH" }, 
+          fr: { t: "À quelle heure fermez-vous ?", p: "Ah kel ur fair-may voo?", l: "[At what hour close you?]", v: "fr-FR" } },
+        { cat: "Time", eng: "I will arrive in 10 minutes.", 
+          th: { t: "จะถึงในสิบนาทีครับ", p: "Ja tueng nai sip na-tee khrap.", l: "[Will arrive in ten minutes (polite).]", v: "th-TH" }, 
+          fr: { t: "J'arrive dans dix minutes.", p: "Zhah-reev dahn dee mee-noot.", l: "[I arrive in ten minutes.]", v: "fr-FR" } },
+        { cat: "Time", eng: "Today or tomorrow?", 
+          th: { t: "วันนี้หรือพรุ่งนี้ครับ", p: "Wan-nee rue phrung-nee khrap?", l: "[Day-this or tomorrow (polite)?]", v: "th-TH" }, 
+          fr: { t: "Aujourd'hui ou demain ?", p: "Oh-zhoor-dwee oo duh-man?", l: "[Today or tomorrow?]", v: "fr-FR" } },
+        { cat: "Time", eng: "What time is it?", 
+          th: { t: "ตอนนี้กี่โมงแล้วครับ", p: "Ton-nee gee-mong laew khrap?", l: "[Now how-many-hours already (polite)?]", v: "th-TH" }, 
+          fr: { t: "Quelle heure est-il ?", p: "Kel ur eh-teel?", l: "[What hour is it?]", v: "fr-FR" } },
+        { cat: "Time", eng: "Wait a moment, please.", 
+          th: { t: "รอสักครู่ครับ", p: "Ror sak-kroo khrap.", l: "[Wait a-moment (polite).]", v: "th-TH" }, 
+          fr: { t: "Attendez un moment, s'il vous plaît.", p: "Ah-tahn-day uhn moh-mahn, seel voo play.", l: "[Wait a moment, if it you pleases.]", v: "fr-FR" } },
+        { cat: "Time", eng: "I have a reservation tonight.", 
+          th: { t: "มีจองไว้คืนนี้ครับ", p: "Mee jong wai kuen-nee khrap.", l: "[Have reserve keep night-this (polite).]", v: "th-TH" }, 
+          fr: { t: "J'ai une réservation pour ce soir.", p: "Zhay oon ray-zair-vah-syohn poor suh swahr.", l: "[I have a reservation for this evening.]", v: "fr-FR" } },
+        { cat: "Social", eng: "How much is this?", 
+          th: { t: "อันนี้เท่าไหร่ครับ", p: "An-nee tao-rai khrap?", l: "[Item-this how-much (polite)?]", v: "th-TH" }, 
+          fr: { t: "C'est combien ?", p: "Say kom-byan?", l: "[It is how much?]", v: "fr-FR" } },
+        { cat: "Social", eng: "I don't understand.", 
+          th: { t: "ไม่เข้าใจครับ", p: "Mai kao-jai khrap.", l: "[Not enter-heart (polite).]", v: "th-TH" }, 
+          fr: { t: "Je ne comprends pas.", p: "Zhuh nuh kom-prahn pah.", l: "[I not understand not.]", v: "fr-FR" } },
+        { cat: "Social", eng: "Speak slower, please.", 
+          th: { t: "พูดช้าๆ หน่อยครับ", p: "Poot cha-cha noi khrap.", l: "[Speak slow-slow a-little (polite).]", v: "th-TH" }, 
+          fr: { t: "Parlez plus lentement, s'il vous plaît.", p: "Par-lay ploo lahnt-mahn, seel voo play.", l: "[Speak more slowly, if it you pleases.]", v: "fr-FR" } },
+        { cat: "Social", eng: "Do you speak English?", 
+          th: { t: "พูดภาษาอังกฤษได้ไหมครับ", p: "Poot pa-sa ang-grit dai mai khrap?", l: "[Speak language English can (question-word) (polite)?]", v: "th-TH" }, 
+          fr: { t: "Parlez-vous anglais ?", p: "Par-lay voo ahn-glay?", l: "[Speak you English?]", v: "fr-FR" } },
+        { cat: "Social", eng: "Excuse me / Sorry.", 
+          th: { t: "ขอโทษครับ", p: "Kor-tot khrap.", l: "[Ask-penalty (polite).]", v: "th-TH" }, 
+          fr: { t: "Excusez-moi / Désolé.", p: "Ex-koo-zay mwah / Day-zo-lay.", l: "[Excuse me / Sorry.]", v: "fr-FR" } },
+        { cat: "Social", eng: "Thank you very much.", 
+          th: { t: "ขอบคุณมากครับ", p: "Kob-khun mak khrap.", l: "[Thank-you very (polite).]", v: "th-TH" }, 
+          fr: { t: "Merci beaucoup.", p: "Mair-see boh-koo.", l: "[Thank you very much.]", v: "fr-FR" } },
+        { cat: "Cooking", eng: "I would like it steamed.", 
+          th: { t: "ขอแบบนึ่งครับ", p: "Kor baep neung khrap.", l: "[Ask-for style steam (polite).]", v: "th-TH" }, 
+          fr: { t: "Je le voudrais à la vapeur.", p: "Zhuh luh voo-dray ah lah vah-pur.", l: "[I it would-like at the steam.]", v: "fr-FR" } },
+        { cat: "Cooking", eng: "Can I have stir-fried vegetables?", 
+          th: { t: "ขอผัดผักครับ", p: "Kor phat phak khrap.", l: "[Ask-for stir-fry vegetable (polite).]", v: "th-TH" }, 
+          fr: { t: "Des légumes sautés, s'il vous plaît.", p: "Day lay-goom soh-tay, seel voo play.", l: "[Some vegetables jumped (tossed), if it you pleases.]", v: "fr-FR" } },
+        { cat: "Cooking", eng: "I would like deep-fried chicken.", 
+          th: { t: "ขอไก่ทอดครับ", p: "Kor gai tot khrap.", l: "[Ask-for chicken fry (polite).]", v: "th-TH" }, 
+          fr: { t: "Je voudrais du poulet frit.", p: "Zhuh voo-dray doo poo-lay free.", l: "[I would-like some chicken fried.]", v: "fr-FR" } },
+        { cat: "Cooking", eng: "Is this pan-fried or grilled?", 
+          th: { t: "อันนี้ทอดหรือย่างครับ", p: "An-nee tot rue yang khrap?", l: "[Item-this fry or grill (polite)?]", v: "th-TH" }, 
+          fr: { t: "C'est poêlé ou grillé ?", p: "Say pwah-lay oo gree-yay?", l: "[It is pan-fried or grilled?]", v: "fr-FR" } },
+        { cat: "Cooking", eng: "I would like a clear soup.", 
+          th: { t: "ขอต้มจืดครับ", p: "Kor tom-juet khrap.", l: "[Ask-for boil-bland (polite).]", v: "th-TH" }, 
+          fr: { t: "Je voudrais un bouillon / une soupe.", p: "Zhuh voo-dray uhn boo-yohn / oon soop.", l: "[I would-like a broth / a soup.]", v: "fr-FR" } }
+    ];
+
+    let currentDay = 0;
+    let currentLang = 'th'; // 'th' or 'fr'
+
+    // DOM Elements
+    const progressText = document.getElementById('progress-text');
+    const categoryBadge = document.getElementById('category-badge');
+    const englishText = document.getElementById('english-text');
+    const translationCard = document.getElementById('translation-card');
+    const revealBtn = document.getElementById('reveal-btn');
+    const targetText = document.getElementById('target-text');
+    const phoneticsText = document.getElementById('phonetics-text');
+    const literalText = document.getElementById('literal-text');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+
+    function loadDay() {
+        const data = database[currentDay];
+        progressText.innerText = `Day ${currentDay + 1} of ${database.length}`;
+        categoryBadge.innerText = data.cat;
+        englishText.innerText = data.eng;
+        
+        // Reset translation card
+        translationCard.style.display = 'none';
+        revealBtn.style.display = 'block';
+
+        // Update navigation buttons
+        prevBtn.disabled = currentDay === 0;
+        nextBtn.disabled = currentDay === database.length - 1;
+
+        populateTranslation();
+    }
+
+    function setLanguage(lang) {
+        currentLang = lang;
+        document.getElementById('btn-th').classList.remove('active');
+        document.getElementById('btn-fr').classList.remove('active');
+        document.getElementById(`btn-${lang}`).classList.add('active');
+        
+        populateTranslation();
+    }
+
+    function populateTranslation() {
+        const data = database[currentDay][currentLang];
+        targetText.innerText = data.t;
+        phoneticsText.innerText = data.p;
+        literalText.innerText = data.l;
+    }
+
+    function revealTranslation() {
+        translationCard.style.display = 'block';
+        revealBtn.style.display = 'none';
+    }
+
+    function changeDay(step) {
+        currentDay += step;
+        loadDay();
+    }
+
+    function playAudio() {
+        const data = database[currentDay][currentLang];
+        const utterance = new SpeechSynthesisUtterance(data.t);
+        utterance.lang = data.v; // Uses native browser voices (th-TH or fr-FR)
+        window.speechSynthesis.speak(utterance);
+    }
+
+    // Initialize the app
+    loadDay();
+
+</script>
+</body>
+</html>
